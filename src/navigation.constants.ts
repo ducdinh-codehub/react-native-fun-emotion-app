@@ -7,4 +7,6 @@ export const screenName = {
   therapy: 'Therapy',
   therapyWorryPage: 'Therapy Worry Page',
   therapyFinishPage: 'Therapy Finish Page',
+  notification: 'Notification',
+  emotionBalance: 'Emotion Balance',
 };
