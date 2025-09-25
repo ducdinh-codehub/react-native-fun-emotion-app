@@ -11,14 +11,30 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
+import Navigation from './src/components/navigation/navigation.component';
+import { Platform } from 'react-native';
+import { useStore } from './src/store/store.init';
+import { useEffect, useState } from 'react';
+import { getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
+import { AuthProvider } from './src/context/auth.context';
+import { Text } from 'react-native-ui-lib';
+import HomeScreen from './src/screen/home/home.screen';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 
 function App() {
-  const isDarkMode = useColorScheme() === 'dark';
+  /*
+  useEffect(() => {
+    const subscriber = onAuthStateChanged(getAuth(), handleAuthStateChanged);
+    return subscriber; // unsubscribe on unmount
+  }, []);*/
+
+  //if (initializing) return null;
 
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
+      <AuthProvider>
+        <Navigation />
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }
