@@ -1,4 +1,25 @@
 {
   "name": "AwesomeProject",
-  "displayName": "AwesomeProject"
+  "displayName": "AwesomeProject",
+  "expo": {
+    "android": {
+      "googleServicesFile": "./AwesomeProject/android/app/google-services.json"
+    },
+    "plugins": [
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow $(PRODUCT_NAME) to use Face ID."
+        }
+      ],
+      ["expo-notifications"]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "40a4e7f3-afa0-4caf-b67f-a1df55d9cf17"
+      }
+    },
+    "owner": "dinhduc",
+    "slug": "react-native-fun"
+  }
 }
