@@ -8,13 +8,6 @@ import DraggableFlatList, {
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { View, Text } from 'react-native-ui-lib';
 
-const NUM_ITEMS = 10;
-function getColor(i: number) {
-  const multiplier = 255 / (NUM_ITEMS - 1);
-  const colorVal = i * multiplier;
-  return `rgb(${colorVal}, ${Math.abs(128 - colorVal)}, ${255 - colorVal})`;
-}
-
 export interface DataIntf {
   key: number;
   content: string;
@@ -22,17 +15,22 @@ export interface DataIntf {
 }
 
 export interface props {
-  data: DataIntf[];
-  setData: any;
+  data: any;
   showFullList: boolean;
+  dispatch: any;
+  innerDispatchAction: string;
+  setInnerDispatchAction: any;
 }
 
 const GrabableList = (props: props) => {
-  const { data, setData, showFullList } = props;
-  const DATA = [...data];
-  const [yourNoteData, setYourNoteData] = useState(DATA.reverse());
-
-  console.log('yourNoteData123', yourNoteData);
+  const {
+    data,
+    showFullList,
+    dispatch,
+    innerDispatchAction,
+    setInnerDispatchAction,
+  } = props;
+  var DATA = [...data];
 
   const renderItem = ({
     item,
@@ -79,7 +77,11 @@ const GrabableList = (props: props) => {
             </View>
             <TouchableOpacity
               onPress={() => {
-                Alert.alert('Hello');
+                dispatch({
+                  type: 'removing-note-by-key',
+                  item: item,
+                });
+                setInnerDispatchAction('removing-note-by-key');
               }}
             >
               <View padding-15 center>
@@ -123,13 +125,17 @@ const GrabableList = (props: props) => {
   return (
     <GestureHandlerRootView>
       <DraggableFlatList
-        data={yourNoteData}
+        data={
+          innerDispatchAction !== 'updating-all-list' ? DATA.reverse() : DATA
+        }
         onDragEnd={({ data }) => {
-          console.log('data', data);
-          const tmp_data = data;
+          console.log('relocatedata', data);
 
-          setYourNoteData(tmp_data);
-          setData(tmp_data);
+          dispatch({
+            type: 'updating-all-list',
+            listItems: [...data],
+          });
+          setInnerDispatchAction('updating-all-list');
         }}
         keyExtractor={item => '_' + item.key}
         renderItem={renderItem}

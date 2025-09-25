@@ -15,7 +15,13 @@ import {
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import { BlurView } from '@react-native-community/blur';
-import React, { useCallback, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useReducer,
+  useRef,
+  useState,
+} from 'react';
 import { DimensionValue, ScrollView } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSharedValue, withSpring } from 'react-native-reanimated';
@@ -23,8 +29,10 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
-import { View, Text, Slider } from 'react-native-ui-lib';
+import { View, Text } from 'react-native-ui-lib';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+
+import Slider from '@react-native-community/slider';
 
 const EmotionBalance = () => {
   const insets = useSafeAreaInsets();
@@ -133,7 +141,7 @@ const EmotionBalance = () => {
     );
   };
 
-  const [NoteData, setNoteData] = useState<NoteDataIntf[]>([
+  const initialNoteData: NoteDataIntf[] = [
     {
       key: 2,
       content:
@@ -153,7 +161,55 @@ const EmotionBalance = () => {
       created: '22/09/2025',
     },
     { key: 1, content: 'I promise I will', created: '22/09/2025' },
-  ]);
+  ];
+
+  const noteDataReducer = (
+    noteData: any,
+    action: {
+      type: string;
+      item: { content: string; created: any; key: number };
+      listItems?: { content: string; created: any; key: number }[];
+    },
+  ) => {
+    switch (action.type) {
+      case 'adding-note': {
+        return [
+          ...noteData,
+          {
+            key: noteData.length + 1,
+            content: action.item.content,
+            created: action.item.created,
+          },
+        ];
+      }
+
+      case 'removing-note-by-created-date': {
+        const newOutputData = [...noteData].filter(
+          item => item.created !== action.item.created,
+        );
+        return newOutputData;
+      }
+
+      case 'removing-note-by-key': {
+        console.log('removing-note-by-key');
+
+        const newOutputData = [...noteData].filter(
+          item => item.key !== action.item.key,
+        );
+        return newOutputData;
+      }
+
+      case 'updating-all-list': {
+        return action.listItems;
+      }
+    }
+  };
+
+  const [newOutputNoteData, dispatch] = useReducer(
+    noteDataReducer,
+    initialNoteData,
+  );
+  console.log('newOutputNoteData', newOutputNoteData);
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
@@ -182,16 +238,13 @@ const EmotionBalance = () => {
     [],
   );
 
-  const addingNewNoteData = (note: NoteDataIntf[]) => {
-    setNoteData(note);
-  };
-
-  const [emotionSliderValue, setEmotionSliderValue] = useState(50);
-  console.log('emotionSliderValue', emotionSliderValue);
+  const [emotionSliderValue, setEmotionSliderValue] = useState<number>(0.5);
 
   const handleValueChange = (newValue: number) => {
     setEmotionSliderValue(newValue);
   };
+
+  const [innerDispatchAction, setInnerDispatchAction] = useState('');
 
   return (
     <GestureHandlerRootView
@@ -235,7 +288,12 @@ const EmotionBalance = () => {
             Improve Yourself Everyday
           </Text>
         </View>
-        <ScrollView style={{ flex: 1 }}>
+        <ScrollView
+          style={{ flex: 1 }}
+          onScroll={() => {
+            console.log('Hello');
+          }}
+        >
           <View padding-s2 gap-s5>
             <EmotionBalanceItem
               openItemSize={0}
@@ -252,12 +310,12 @@ const EmotionBalance = () => {
                   <View width={270} padding-5>
                     <Slider
                       onValueChange={handleValueChange}
-                      minimumTrackTintColor="blue"
-                      maximumTrackTintColor="orange"
-                      minimumValue={0}
-                      maximumValue={100}
                       value={emotionSliderValue}
                       style={{ width: '100%' }}
+                      minimumValue={0}
+                      maximumValue={1}
+                      minimumTrackTintColor="blue"
+                      maximumTrackTintColor="orange"
                     />
                   </View>
                   <FontAwesome6
@@ -308,11 +366,13 @@ const EmotionBalance = () => {
               closeYourNoteComponent={closeYourNoteComponent}
               innerComponent={
                 <Note
+                  innerDispatchAction={innerDispatchAction}
+                  setInnerDispatchAction={setInnerDispatchAction}
+                  dispatch={dispatch}
                   setIsShowDrawing={handlePresentDrawingModalPress}
-                  setNoteData={setNoteData}
                   width={yourNoteComponentWidth}
                   height={yourNoteComponentHeight}
-                  data={NoteData}
+                  data={newOutputNoteData}
                   isDisplayNote={isOpenNote}
                   setIsShowFullNote={handlePresentModalPress}
                 />
@@ -346,8 +406,10 @@ const EmotionBalance = () => {
                 <Text text60BO>Your Note</Text>
                 <View>
                   <GrabableList
-                    data={NoteData}
-                    setData={addingNewNoteData}
+                    innerDispatchAction={innerDispatchAction}
+                    setInnerDispatchAction={setInnerDispatchAction}
+                    dispatch={dispatch}
+                    data={newOutputNoteData}
                     showFullList={true}
                   />
                 </View>

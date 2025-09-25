@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useReducer, useState } from 'react';
 import { Dimensions, DimensionValue, TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
 import {
@@ -25,11 +25,13 @@ import GrabableList from './grabable.list.component';
 export interface NotePropsIntf {
   height?: any;
   width?: any;
-  data: NoteDataIntf[];
+  data: any;
   isDisplayNote: boolean;
   setIsShowFullNote?: any;
   setIsShowDrawing?: any;
-  setNoteData: (val: NoteDataIntf[]) => void;
+  dispatch?: any;
+  innerDispatchAction: any;
+  setInnerDispatchAction: any;
 }
 
 export interface NoteDataIntf {
@@ -45,12 +47,12 @@ const Note = (props: NotePropsIntf) => {
     data,
     isDisplayNote,
     setIsShowFullNote,
-    setNoteData,
     setIsShowDrawing,
+    dispatch,
+    innerDispatchAction,
+    setInnerDispatchAction,
   } = props;
   const [content, onChangeContent] = useState('');
-
-  console.log('dlfskdjf;ks;odkf;s', data);
 
   return (
     <Animated.View style={{ width: '100%', height: '100%', gap: 15 }}>
@@ -93,13 +95,15 @@ const Note = (props: NotePropsIntf) => {
 
                 <TouchableOpacity
                   onPress={() => {
-                    const tmp_data = data;
-                    tmp_data.push({
-                      key: data[data.length - 1].key + 1,
-                      content: content,
-                      created: new Date().toLocaleString(),
+                    dispatch({
+                      type: 'adding-note',
+                      item: {
+                        key: data[data.length - 1].key + 1,
+                        content: content,
+                        created: new Date().toLocaleString(),
+                      },
                     });
-                    setNoteData(tmp_data);
+                    setInnerDispatchAction('adding-note');
                   }}
                 >
                   <View
@@ -173,8 +177,10 @@ const Note = (props: NotePropsIntf) => {
           </View>
           <View gap-10>
             <GrabableList
+              innerDispatchAction={innerDispatchAction}
+              setInnerDispatchAction={setInnerDispatchAction}
+              dispatch={dispatch}
               data={data}
-              setData={setNoteData}
               showFullList={false}
             />
             {/*<GestureHandlerRootView>
