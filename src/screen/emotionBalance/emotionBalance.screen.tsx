@@ -21,10 +21,20 @@ import React, {
   useReducer,
   useRef,
   useState,
+  useContext,
+  useMemo,
 } from 'react';
-import { DimensionValue, ScrollView } from 'react-native';
+import { DimensionValue, ScrollView, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, {
+  Extrapolate,
+  Extrapolation,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -33,8 +43,32 @@ import { View, Text } from 'react-native-ui-lib';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 
 import Slider from '@react-native-community/slider';
+import FloatButton from '@app/components/sharing/float.button.component';
+
+import {
+  ActivityIntf,
+  EmotionBalanceContext,
+  EmotionBalanceIntf,
+  ImproveTimelineIntf,
+  NoteIntf,
+} from '@app/context/emotion.balance.context';
+import { useCreateEmotionBalanceSurvey } from '@app/controllers/emotionBalanceSurvey/useEmotionBalanceSurvey';
+export interface EmotionBalanceInputIntf {
+  positiveRate?: number | undefined;
+  improveTimeline?: ImproveTimelineIntf;
+  choosingActivities?: ActivityIntf[];
+  notes?: NoteIntf[];
+}
 
 const EmotionBalance = () => {
+  const {
+    setPositiveRate,
+    setImproveTimeline,
+    setChoosingActivities,
+    setNotes,
+    getComprehensiveState,
+  } = useContext(EmotionBalanceContext);
+
   const insets = useSafeAreaInsets();
   const lineData = [
     { value: 60, label: '1/9' },
@@ -209,8 +243,6 @@ const EmotionBalance = () => {
     noteDataReducer,
     initialNoteData,
   );
-  console.log('newOutputNoteData', newOutputNoteData);
-
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
     setIsShowFullNote(true);
@@ -238,13 +270,84 @@ const EmotionBalance = () => {
     [],
   );
 
-  const [emotionSliderValue, setEmotionSliderValue] = useState<number>(0.5);
+  const [emotionSliderValue, setEmotionSliderValue] = useState<number>(50);
 
-  const handleValueChange = (newValue: number) => {
-    setEmotionSliderValue(newValue);
+  const getEmotionBalanceFormValue = () => {
+    const value = getComprehensiveState();
+    console.log('formVL:', value);
   };
 
+  const handlePositiveRateValueChange = (newValue: number) => {
+    setEmotionSliderValue(newValue);
+    const val: EmotionBalanceInputIntf = {
+      positiveRate: newValue,
+    };
+
+    setFormValue(val);
+  };
+
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+
+  useEffect(() => {
+    const timerId = setInterval(() => {
+      const dt = new Date();
+
+      setCurrentDate(dt);
+    }, 4000); // Update every second
+
+    return () => clearInterval(timerId); // Clear interval on unmount
+  }, []);
+
+  useEffect(() => {
+    handlePositiveRateValueChange(emotionSliderValue);
+  }, []);
+
   const [innerDispatchAction, setInnerDispatchAction] = useState('');
+
+  const scrollY = useSharedValue(0); // Track scroll position
+  const maxHeaderHeight = 150; // Large header height
+  const minHeaderHeight = 50; // Small header height
+  const scrollDistance = 150; // Distance to fully shrink header
+
+  const scrollHandler = (e: any) => {
+    scrollY.value = e.nativeEvent.contentOffset.y;
+  };
+
+  // Animate header height
+  const headerAnimatedStyle = useAnimatedStyle(() => {
+    const height = interpolate(
+      scrollY.value,
+      [0, scrollDistance],
+      [maxHeaderHeight, minHeaderHeight],
+      Extrapolation.CLAMP, // Prevent height from going beyond min/max
+    );
+    return { height };
+  });
+
+  const setFormValue = (value: EmotionBalanceInputIntf) => {
+    if (value.positiveRate) {
+      setPositiveRate(value.positiveRate);
+    } else {
+      setPositiveRate(0);
+    }
+
+    if (value.improveTimeline) {
+      setImproveTimeline(value.improveTimeline);
+    }
+
+    if (value.notes) {
+      setNotes(value.notes);
+    }
+
+    if (value.choosingActivities) {
+      setChoosingActivities(value.choosingActivities);
+    }
+  };
+
+  const { mutate: createEmotionSurvey, isSuccess } =
+    useCreateEmotionBalanceSurvey();
+
+  console.log('isSuccess', isSuccess);
 
   return (
     <GestureHandlerRootView
@@ -283,17 +386,13 @@ const EmotionBalance = () => {
             </View>
           </View>
         </BlurView>
-        <View height={150} style={{ backgroundColor: '#66a3ff' }} center>
+        <Animated.View style={[styles.header, headerAnimatedStyle]}>
           <Text text50BO style={{ fontWeight: '800' }} color={'white'}>
             Improve Yourself Everyday
           </Text>
-        </View>
-        <ScrollView
-          style={{ flex: 1 }}
-          onScroll={() => {
-            console.log('Hello');
-          }}
-        >
+        </Animated.View>
+
+        <ScrollView style={{ flex: 1 }} onScroll={scrollHandler}>
           <View padding-s2 gap-s5>
             <EmotionBalanceItem
               openItemSize={0}
@@ -301,28 +400,70 @@ const EmotionBalance = () => {
               title="How Do You feel Today ?"
               isAlwaysOpen={true}
               innerComponent={
-                <View row center gap-5>
-                  <FontAwesome6
-                    size={30}
-                    name="face-sad-tear"
-                    style={{ color: 'white' }}
-                  />
-                  <View width={270} padding-5>
-                    <Slider
-                      onValueChange={handleValueChange}
-                      value={emotionSliderValue}
-                      style={{ width: '100%' }}
-                      minimumValue={0}
-                      maximumValue={1}
-                      minimumTrackTintColor="blue"
-                      maximumTrackTintColor="orange"
+                <View center>
+                  <View
+                    width={'100%'}
+                    row
+                    padding-s2
+                    style={{ justifyContent: 'space-around' }}
+                  >
+                    <View gap-s4 center>
+                      <Text text60BO color="white">
+                        Date
+                      </Text>
+                      <Text text80BO color="white">
+                        {currentDate
+                          .toLocaleDateString()
+                          .split('/')[0]
+                          .padStart(2, '0') +
+                          '/' +
+                          currentDate
+                            .toLocaleDateString()
+                            .split('/')[1]
+                            .padStart(2, '0')}
+                      </Text>
+                    </View>
+                    <View gap-s4 center>
+                      <Text text60BO color="white">
+                        Time
+                      </Text>
+                      <Text text80BO color="white">
+                        {currentDate
+                          .toLocaleTimeString()
+                          .split(':')[0]
+                          .padStart(2, '0') +
+                          ':' +
+                          currentDate
+                            .toLocaleTimeString()
+                            .split(':')[1]
+                            .padStart(2, '0')}
+                      </Text>
+                    </View>
+                  </View>
+                  <View row center gap-5>
+                    <FontAwesome6
+                      size={30}
+                      name="face-sad-tear"
+                      style={{ color: 'white' }}
+                    />
+                    <View width={270} padding-5>
+                      <Slider
+                        onValueChange={handlePositiveRateValueChange}
+                        value={emotionSliderValue}
+                        style={{ width: '100%' }}
+                        minimumValue={0}
+                        maximumValue={100}
+                        step={10}
+                        maximumTrackTintColor="#00b4d8"
+                        minimumTrackTintColor="#ffba08"
+                      />
+                    </View>
+                    <FontAwesome6
+                      size={30}
+                      name="face-smile-beam"
+                      style={{ color: 'white' }}
                     />
                   </View>
-                  <FontAwesome6
-                    size={30}
-                    name="face-smile-beam"
-                    style={{ color: 'white' }}
-                  />
                 </View>
               }
             />
@@ -378,6 +519,7 @@ const EmotionBalance = () => {
                 />
               }
             />
+
             <EmotionBalanceItem
               iconName="bars-progress"
               title="Progress"
@@ -440,8 +582,45 @@ const EmotionBalance = () => {
           </BottomSheetModal>
         </BottomSheetModalProvider>
       </View>
+      <FloatButton
+        onPress={() => {
+          /*
+          createEmotionSurvey({
+            positiveRate: 10,
+            surveyDate: '2025/09/30T18:00:00',
+            created_at: '2025/09/30T18:00:00',
+            updated_at: '2025/09/30T18:00:00',
+          });*/
+
+          getEmotionBalanceFormValue();
+        }}
+      />
     </GestureHandlerRootView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  header: {
+    backgroundColor: 'black', // Neutral background
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  content: {
+    padding: 20,
+  },
+  contentText: {
+    fontSize: 16,
+  },
+});
 
 export default EmotionBalance;
