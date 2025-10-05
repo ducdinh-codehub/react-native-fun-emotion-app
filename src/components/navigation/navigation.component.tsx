@@ -35,6 +35,7 @@ import { BlurView } from '@react-native-community/blur';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import EmotionBalance from '@app/screen/emotionBalance/emotionBalance.screen';
+import CalmRelaxation from '@app/screen/calmRelaxation/calmRelaxation.screen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -216,6 +217,19 @@ const routes: navigationIntf[] = [
   {
     name: screenName.emotionBalance,
     component: EmotionBalance,
+    screenIcon: null,
+    options: {
+      animationEnabled: true,
+
+      headerShown: false,
+      tabBarStyle: {
+        display: 'none',
+      },
+    },
+  },
+  {
+    name: screenName.calmRelaxation,
+    component: CalmRelaxation,
     screenIcon: null,
     options: {
       animationEnabled: true,

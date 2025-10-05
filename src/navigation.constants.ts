@@ -9,4 +9,5 @@ export const screenName = {
   therapyFinishPage: 'Therapy Finish Page',
   notification: 'Notification',
   emotionBalance: 'Emotion Balance',
+  calmRelaxation: 'Calm Relaxation',
 };
