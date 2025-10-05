@@ -20,6 +20,15 @@ import { AuthProvider } from './src/context/auth.context';
 import { Text } from 'react-native-ui-lib';
 import HomeScreen from './src/screen/home/home.screen';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { EmotionBalanceProvider } from '@app/context/emotion.balance.context';
+
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+} from '@tanstack/react-query';
+
+const queryClient = new QueryClient();
 
 function App() {
   /*
@@ -32,9 +41,13 @@ function App() {
 
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <Navigation />
-      </AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <EmotionBalanceProvider>
+            <Navigation />
+          </EmotionBalanceProvider>
+        </AuthProvider>
+      </QueryClientProvider>
     </SafeAreaProvider>
   );
 }

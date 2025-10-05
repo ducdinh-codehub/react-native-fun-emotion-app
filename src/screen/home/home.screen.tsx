@@ -179,6 +179,9 @@ const HomeScreen = () => {
               contentTextSize={16}
               contentTextColor={'black'}
               contentTextBackgroundcolor={'#F0F0ED'}
+              onPress={() => {
+                navigation.navigate(screenName.calmRelaxation);
+              }}
             />
           </View>
 
