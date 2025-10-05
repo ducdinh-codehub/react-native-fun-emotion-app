@@ -6,4 +6,5 @@ export interface CalendarIntf {
   width?: DimensionValue;
   height?: DimensionValue;
   getCalendarConfig?: () => setupCalendarConfigProps;
+  getSelectedDate?: any;
 }

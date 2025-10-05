@@ -8,4 +8,5 @@ export interface CircleButtonProps {
   textColor?: string;
   iconName?: string;
   iconSize?: number;
+  iconColor?: string;
 }

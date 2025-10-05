@@ -4,15 +4,26 @@ import { CircleButtonProps } from '../interface/circle.button.interface';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 
 const CircleButton = (props: CircleButtonProps) => {
-  const { title, onPress, iconName, iconSize } = props;
+  const {
+    title,
+    onPress,
+    iconName,
+    iconSize,
+    iconColor,
+    width,
+    height,
+    color,
+    textColor,
+    titleSize,
+  } = props;
   return (
     <TouchableOpacity
       style={[
         styles.button,
         {
-          width: props.width,
-          height: props.height,
-          backgroundColor: props.color ? props.color : 'black',
+          width: width,
+          height: height,
+          backgroundColor: color ? color : 'black',
         },
       ]}
       onPress={onPress}
@@ -21,13 +32,17 @@ const CircleButton = (props: CircleButtonProps) => {
         style={[
           styles.buttonText,
           {
-            color: props.textColor ? props.textColor : 'white',
-            fontSize: props?.titleSize ? props.titleSize : 10,
+            color: textColor ? textColor : 'white',
+            fontSize: titleSize ? titleSize : 10,
           },
         ]}
       >
         {iconName ? (
-          <FontAwesome6 name={iconName} size={iconSize ? iconSize : 20} />
+          <FontAwesome6
+            color={iconColor}
+            name={iconName}
+            size={iconSize ? iconSize : 20}
+          />
         ) : (
           title
         )}
